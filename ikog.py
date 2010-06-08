@@ -527,6 +527,27 @@ class EditorLauncher:
                     printError(str(e))
         return success
 
+### An abstraction over commands
+class BaseCommand(object):
+    def __init__(self, name, shortdesc='', helpdesc=''):
+        '''func should accept two args: todolist and line'''
+        self.name = name
+        self.shortdesc = shortdesc
+        self.helpdesc = helpdesc
+    def run(self, test, line):
+        '''This MUST be overridden'''
+        raise NotImplementedError
+
+class TopCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'TOP', 'Go to top', 'This is the help of top')
+    def run(self, test, line):
+        test.currentTask = 0
+        if line != "":
+            test.setFilterArray(True, "")
+            test.showLocalFilter()
+            test.printShortList(line)
+            truncateTask = True
 
 ### The main todo list
 class TodoList:
@@ -843,6 +864,13 @@ class TodoList:
         self.localFilters = []
         # split the file into the source code and the todo list
         self.filename = todoFile
+
+        self.commands = {}
+        for Command in BaseCommand.__subclasses__():
+            cmd_instance = Command()
+            self.commands[cmd_instance.name] = cmd_instance
+
+
         try:
             self.filename = os.readlink(todoFile)
         except Exception:
@@ -1130,7 +1158,9 @@ class TodoList:
                     continue
                 print "Shortcut: ", rawcommand, " ", line
             command = rawcommand.upper()
-            if command == "":
+            if command in self.commands:
+                self.commands[command].run(self, line)
+            elif command == "":
                 if self.review:
                     self.incTaskLoop()
             elif command == "PAB":
@@ -1253,13 +1283,13 @@ class TodoList:
                 self.incTaskLoop()
             elif command == "PREV" or command == "P":
                 self.decTaskLoop()
-            elif command == "TOP" or command == "T" or command == "0":
-                self.currentTask = 0
-                if line != "":
-                    self.setFilterArray(True, "")
-                    self.showLocalFilter()
-                    self.printShortList(line)
-                    truncateTask = True
+#            elif command == "TOP" or command == "T" or command == "0":
+#                self.currentTask = 0
+#                if line != "":
+#                    self.setFilterArray(True, "")
+#                    self.showLocalFilter()
+#                    self.printShortList(line)
+#                    truncateTask = True
             elif command == "GO" or command == "G":
                 self.moveTo(line)
             elif command == "IMMEDIATE" or command == "I" or command == "++":
