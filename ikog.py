@@ -235,14 +235,14 @@ class ColorCoder:
     def isValidSet(self, myset):
         if myset < len(self.codes):
             return True
-        else: 
+        else:
             return False
 
     def colorSupported(self):
         return (os.name == "posix" or os.name == "mac")
 
     def usingColor(self):
-        return (self.codeSet <> self.NONE and self.colorSupported())
+        return (self.codeSet != self.NONE and self.colorSupported())
 
     def code(self, type):
         if self.codeSet == self.NONE or not self.colorSupported():
@@ -982,7 +982,7 @@ class TodoList:
 
     def showPAbbreviations(self):
         print globalPAbbr.toStringVerbose()
-    
+
     def setAbbreviation(self, line):
         save = False
         elements = line.split(" ", 1)
@@ -1005,7 +1005,7 @@ class TodoList:
 
     def showAbbreviations(self):
         print globalAbbr.toStringVerbose()
-    
+
     def setShortcut(self, line, force = False):
         elements = line.split(" ", 1)
         try:
@@ -1028,7 +1028,7 @@ class TodoList:
             self.shortcuts[index] = command
             return True
 
-        
+
     def showShortcuts(self):
         index = 0
         for s in self.shortcuts:
@@ -1109,7 +1109,7 @@ class TodoList:
             gColor.setCodeSet(int(params[1].strip()))
         elif cmd == "cfgAbbreviations":
             abbrs = eval(params[1].strip())
-            globalAbbr.setAbbreviations(abbrs) 
+            globalAbbr.setAbbreviations(abbrs)
         elif cmd == "cfgPAbbreviations":
             abbrs = eval(params[1].strip())
             globalPAbbr.setAbbreviations(abbrs)
@@ -1549,7 +1549,7 @@ class TodoList:
                 f.write(magicTag + "DATA\n")
             else:
                 f = open(filename,"a+b")
-        
+
             f.write(item.toString())
             f.write("\n")
             f.close()
@@ -1758,7 +1758,7 @@ class TodoList:
             except ValueError:
                 index = -1
         return index
-    
+
     def archiveTask(self, indexStr):
         doit = False
         line = indexStr.split(" ", 1)
@@ -2342,7 +2342,7 @@ class Abbreviations:
             "@H":"@Home", "@I":"@Internet","@L":"@Lunch", "@M":"@Meeting", "@N":"@Next",
             "@P":"@Phone", "@Pw":"@Password", "@S":"@Someday/Maybe",
             "@O":"@Other", "@W4":"@Waiting_For", "@W":"@Work"}
-        
+
 
     def setAbbreviations(self, abbr):
         self.abbrevs.update(abbr)
@@ -2352,7 +2352,7 @@ class Abbreviations:
 
     def removeAbbreviation(self, key):
         key = key.title()
-        if self.abbrevs.has_key(key):
+        if key in self.abbrevs:
             del self.abbrevs[key]
             return True
         return False
@@ -2362,7 +2362,7 @@ class Abbreviations:
             return action
 
         action = action.title()
-        if self.abbrevs.has_key(action):
+        if action in self.abbrevs:
             return self.abbrevs[action]
         return action
 
@@ -2370,10 +2370,10 @@ class Abbreviations:
         if not project.lower().startswith(":p"):
             return project
         project = project.title()
-        if self.abbrevs.has_key(project):
+        if project in self.abbrevs:
             return self.abbrevs[project]
         return project
-            
+
     def toString(self):
         return str(self.abbrevs)
 
