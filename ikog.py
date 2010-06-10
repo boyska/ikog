@@ -540,7 +540,7 @@ class BaseCommand(object):
 
 class TopCommand(BaseCommand):
     def __init__(self):
-        BaseCommand.__init__(self, 'TOP', 'Go to top', 'This is the help of top')
+        BaseCommand.__init__(self, 'TOP', 'Go to top', '')
     def run(self, test, line):
         test.currentTask = 0
         if line != "":
@@ -565,6 +565,55 @@ class PabCommand(BaseCommand):
             test.showPAbbreviations()
         elif test.setPAbbreviation(line):
             test.save("")
+
+class ListFileCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'LISTF',
+                "LISTF [outputfile] [LISTARGS]\touptut LIST to outputfile",
+                'Executes LIST and redirect its output to outputfile.\n'
+                'If outputfile is not given, redirect to "output".\n'
+                'LISTARGS is any output you can give to LIST:'
+                'see "HELP LIST" for more details\n')
+    def run(self, test, line):
+        splitted_line = [word for word in line.split(' ', 1) if word]
+        if not splitted_line:
+            output_file = 'output'
+        else:
+            output_file = splitted_line[0]
+        if len(splitted_line) < 2:
+            list_args = ''
+        else:
+            list_args = splitted_line[1]
+
+        old_out = sys.stdout
+        print ruler
+        sys.stdout = open(output_file, 'w')
+        test.setFilterArray(True, list_args)
+        #test.showLocalFilter()
+        test.printList(False, "", "")
+        test.clearFilterArray(True)
+        truncateTask = True
+        sys.stdout = old_out
+        print "Output sent to %s" % output_file
+        print ruler
+
+class HelpCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'HELP',
+                "HELP [command]\tShow help. If command is given, show help for that"
+                '')
+    def run(self, test, line):
+        if not line.strip():
+            test.printHelp(test.help)
+            return
+        if len(line.strip().split()) > 1 or line.strip() not in test.commands:
+            print "Can't understand. You should give a command name, or nothing to receive a complete help"
+        else:
+            cmd = test.commands[line.strip()]
+            print cmd.shortdesc
+            if cmd.helpdesc:
+                print '--'
+                print cmd.helpdesc
 
 class AbCommand(BaseCommand):
     def __init__(self):
@@ -1262,8 +1311,6 @@ class TodoList:
                     self.save("")
             elif command == "?":
                 self.printHelp(self.quickCard)
-            elif command == "HELP" or command == "H":
-                self.printHelp(self.help)
             elif command == "QUIT" or command == "Q":
                 if self.dirty:
                     self.forceSave("")
@@ -2700,48 +2747,49 @@ class  TodoItem:
         entry = entry + gColor.code("normal") + "\nCreated: [" + self.created + "]"
         return entry
 
-### Entry point
-for line in notice:
-    print line
+if __name__ == '__main__':
+    ### Entry point
+    for line in notice:
+        print line
 
-pythonVer = platform.python_version()
-ver = pythonVer.split(".")
-if int(ver[0]) < gReqPythonMajor or (int(ver[0]) == gReqPythonMajor and int(ver[1]) < gReqPythonMinor):
-    print "\nSorry but this program requires Python ", \
-    str(gReqPythonMajor) + "." + str(gReqPythonMinor), \
-    "\nYour current version is ", \
-    str(ver[0]) + "." + str(ver[1]), \
-    "\nTo run the program you will need to install the current version of Python."
-else:
-    import webbrowser
-    # signal.signal(signal.SIGINT, signalHandler)
-    gColor = ColorCoder(cfgColor)
-    globalAbbr = Abbreviations()
-    globalPAbbr = Abbreviations(project=True)
-    commandList = []
-    if len(sys.argv) > 2:      
-        command = ""
-        reopen = sys.argv[1]
-        if reopen == ".":
-            reopen = sys.argv[0] + ".dat"
-        for word in sys.argv[2:]:
-            if word == "/":
-                commandList.append(command)
-                command = ""
-            else:
-                command = command + word + " "
-        commandList.append(command)
-    elif len(sys.argv) > 1:
-        reopen = sys.argv[1]
+    pythonVer = platform.python_version()
+    ver = pythonVer.split(".")
+    if int(ver[0]) < gReqPythonMajor or (int(ver[0]) == gReqPythonMajor and int(ver[1]) < gReqPythonMinor):
+        print "\nSorry but this program requires Python ", \
+        str(gReqPythonMajor) + "." + str(gReqPythonMinor), \
+        "\nYour current version is ", \
+        str(ver[0]) + "." + str(ver[1]), \
+        "\nTo run the program you will need to install the current version of Python."
     else:
-        reopen = sys.argv[0] + ".dat"
-    if usePlugin:
-        ruler = ikogPlugin.getRuler()
-        divider = ikogPlugin.getDivider()
-    while reopen != "":
-        print commandList
-        todoList = TodoList(sys.argv[0], reopen)
-        reopen = todoList.run(commandList)
+        import webbrowser
+        # signal.signal(signal.SIGINT, signalHandler)
+        gColor = ColorCoder(cfgColor)
+        globalAbbr = Abbreviations()
+        globalPAbbr = Abbreviations(project=True)
         commandList = []
-print "Goodbye"
+        if len(sys.argv) > 2:
+            command = ""
+            reopen = sys.argv[1]
+            if reopen == ".":
+                reopen = sys.argv[0] + ".dat"
+            for word in sys.argv[2:]:
+                if word == "/":
+                    commandList.append(command)
+                    command = ""
+                else:
+                    command = command + word + " "
+            commandList.append(command)
+        elif len(sys.argv) > 1:
+            reopen = sys.argv[1]
+        else:
+            reopen = sys.argv[0] + ".dat"
+        if usePlugin:
+            ruler = ikogPlugin.getRuler()
+            divider = ikogPlugin.getDivider()
+        while reopen != "":
+            print commandList
+            todoList = TodoList(sys.argv[0], reopen)
+            reopen = todoList.run(commandList)
+            commandList = []
+    print "Goodbye"
 
