@@ -549,6 +549,33 @@ class TopCommand(BaseCommand):
             test.printShortList(line)
             truncateTask = True
 
+class GoCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'GO', 'GO N\tDisplay task N', '')
+    def run(self, test, line):
+        test.moveTo(line)
+
+class PabCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'PAB',
+                'PAB :px :pfull\tProject abbreviation. :px expands to :pfull',
+                '')
+    def run(self, test, line):
+        if line.strip() == "?":
+            test.showPAbbreviations()
+        elif test.setPAbbreviation(line):
+            test.save("")
+
+class AbCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'ABBREV',
+                "ABBREV/AB @x @full\tCreate new abbreviation. @x expands to @full",
+                '')
+    def run(self, test, line):
+        if line.strip() == "?":
+            test.showAbbreviations()
+        elif test.setAbbreviation(line):
+            test.save("")
 ### The main todo list
 class TodoList:
     quickCard = ["Quick reference card:",
@@ -1163,16 +1190,6 @@ class TodoList:
             elif command == "":
                 if self.review:
                     self.incTaskLoop()
-            elif command == "PAB":
-                if line.strip() == "?":
-                    self.showPAbbreviations()
-                elif self.setPAbbreviation(line):
-                    self.save("")
-            elif command == "ABBREV" or command == "AB":
-                if line.strip() == "?":
-                    self.showAbbreviations()
-                elif self.setAbbreviation(line):
-                    self.save("")
             elif command == "SHORTCUT" or command == "SC":
                 if line.strip() == "?":
                     self.showShortcuts()
@@ -1290,8 +1307,6 @@ class TodoList:
 #                    self.showLocalFilter()
 #                    self.printShortList(line)
 #                    truncateTask = True
-            elif command == "GO" or command == "G":
-                self.moveTo(line)
             elif command == "IMMEDIATE" or command == "I" or command == "++":
                 newItem = self.createItem(":d+0 " + line)
                 if newItem.hasHiddenTask():
