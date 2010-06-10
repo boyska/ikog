@@ -215,21 +215,21 @@ class ColorCoder:
             "row0":"\x1b[0;35m",
             "row1":"\x1b[0;36m"}]
 
-    def __init__(self, set):
+    def __init__(self, codeset):
         self.codeSet = self.NONE
-        self.setCodeSet(set)
+        self.setCodeSet(codeset)
 
     def stripCodes(self, text):
         # strip out the ansi codes
         ex = re.compile("\x1b\[[0-9;]*m")
         return ex.sub("", text)
 
-    def setCodeSet(self, set):
+    def setCodeSet(self, codeset):
         old = self.codeSet
-        if set < 0:
+        if codeset < 0:
             self.codeSet = self.NONE
-        elif set < len(self.codes):
-            self.codeSet = set
+        elif codeset < len(self.codes):
+            self.codeSet = codeset
         return (old != self.codeSet)
 
     def isValidSet(self, myset):
@@ -1195,6 +1195,33 @@ class TodoList:
             print "AES encryption not available."
         print("\nEnter HELP for instructions.")
 
+        def completer(text, state):
+            avail = ()
+            if readline.get_begidx() == 0: #start - cmd
+                if text:
+                    avail= [cmd for cmd in self.commands.keys()
+                            if cmd.startswith(text)]
+                else:
+                    avail = self.commands.keys()
+            else:
+                #TODO - Context and projects
+                if text.startswith('@'):
+                    project_set = set()
+                    for item in self.todo:
+                        project_set.update(item.getActions())
+                    avail = [cmd for cmd in project_set if cmd.startswith(text)]
+                elif text.startswith(':'):
+                    project_set = set()
+                    for item in self.todo:
+                        project_set.update([':p%s' % x for x in item.getProjects()])
+                    avail = [cmd for cmd in project_set if cmd.startswith(text)]
+            if len(avail) > state:
+                return avail[state]
+            return None
+        readline.set_completer(completer)
+        readline.set_completer_delims(' ')
+        readline.parse_and_bind("tab: complete")
+
         done = False
         printCurrent = True
         self.sortByPriority()
@@ -1323,12 +1350,12 @@ class TodoList:
                     self.showError("Unable to launch browser. " + str(e))
             elif command == "COLOR" or command == "COLOUR" or command == "C":
                 try:
-                    set = int(line, 10)
+                    aset = int(line, 10)
                 except ValueError:
-                    set = gColor.ANSI
-                if not gColor.isValidSet(set):
+                    aset = gColor.ANSI
+                if not gColor.isValidSet(aset):
                     self.showError("Invalid colour set ignored.")
-                elif gColor.setCodeSet(set):
+                elif gColor.setCodeSet(aset):
                     self.save("")
             elif command == "MONOCHROME" or command == "MONO":
                 if gColor.setCodeSet(gColor.NONE):
