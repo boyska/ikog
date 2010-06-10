@@ -529,18 +529,19 @@ class EditorLauncher:
 
 ### An abstraction over commands
 class BaseCommand(object):
-    def __init__(self, name, shortdesc='', helpdesc=''):
+    def __init__(self, name, shortdesc='', helpdesc='', aliases=[]):
         '''func should accept two args: todolist and line'''
         self.name = name
         self.shortdesc = shortdesc
         self.helpdesc = helpdesc
+        self.aliases = aliases
     def run(self, test, line):
         '''This MUST be overridden'''
         raise NotImplementedError
 
 class TopCommand(BaseCommand):
     def __init__(self):
-        BaseCommand.__init__(self, 'TOP', 'Go to top', '')
+        BaseCommand.__init__(self, 'TOP', 'Go to top', '', ['T'])
     def run(self, test, line):
         test.currentTask = 0
         if line != "":
@@ -551,7 +552,7 @@ class TopCommand(BaseCommand):
 
 class GoCommand(BaseCommand):
     def __init__(self):
-        BaseCommand.__init__(self, 'GO', 'GO N\tDisplay task N', '')
+        BaseCommand.__init__(self, 'GO', 'GO N\tDisplay task N', '', ['G'])
     def run(self, test, line):
         test.moveTo(line)
 
@@ -573,7 +574,8 @@ class ListFileCommand(BaseCommand):
                 'Executes LIST and redirect its output to outputfile.\n'
                 'If outputfile is not given, redirect to "output".\n'
                 'LISTARGS is any output you can give to LIST:'
-                'see "HELP LIST" for more details\n')
+                'see "HELP LIST" for more details\n',
+                ['LF'])
     def run(self, test, line):
         splitted_line = [word for word in line.split(' ', 1) if word]
         if not splitted_line:
@@ -601,7 +603,7 @@ class HelpCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'HELP',
                 "HELP [command]\tShow help. If command is given, show help for that"
-                '')
+                '', ['H'])
     def run(self, test, line):
         if not line.strip():
             test.printHelp(test.help)
@@ -619,7 +621,7 @@ class AbCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'ABBREV',
                 "ABBREV/AB @x @full\tCreate new abbreviation. @x expands to @full",
-                '')
+                '', ['AB'])
     def run(self, test, line):
         if line.strip() == "?":
             test.showAbbreviations()
@@ -1263,6 +1265,9 @@ class TodoList:
             command = rawcommand.upper()
             if command in self.commands:
                 self.commands[command].run(self, line)
+            elif [ c for c in self.commands.values() if command in c.aliases ]:
+                [ c for c in self.commands.values()
+                        if command in c.aliases ][0].run(self, line)
             elif command == "":
                 if self.review:
                     self.incTaskLoop()
