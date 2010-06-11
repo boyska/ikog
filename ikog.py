@@ -1202,7 +1202,7 @@ class TodoList:
             if readline.get_begidx() == 0: #start - cmd
                 if text:
                     avail= [cmd for cmd in self.commands.keys()
-                            if cmd.startswith(text)]
+                            if cmd.upper().startswith(text.upper())]
                 else:
                     avail = self.commands.keys()
             else:
@@ -1211,12 +1211,12 @@ class TodoList:
                     project_set = set()
                     for item in self.todo:
                         project_set.update(item.getActions())
-                    avail = [cmd for cmd in project_set if cmd.startswith(text)]
+                    avail = [cmd for cmd in project_set if cmd.upper().startswith(text.upper())]
                 elif text.startswith(':'):
                     project_set = set()
                     for item in self.todo:
                         project_set.update([':p%s' % x for x in item.getProjects()])
-                    avail = [cmd for cmd in project_set if cmd.startswith(text)]
+                    avail = [cmd for cmd in project_set if cmd.upper().startswith(text.upper())]
             if len(avail) > state:
                 return avail[state]
             return None
