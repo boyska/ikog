@@ -1221,7 +1221,7 @@ class TodoList:
                 return avail[state]
             return None
         readline.set_completer(completer)
-        readline.set_completer_delims(' ')
+        readline.set_completer_delims(' -')
         readline.parse_and_bind("tab: complete")
 
         done = False
