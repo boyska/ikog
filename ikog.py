@@ -617,6 +617,19 @@ class HelpCommand(BaseCommand):
                 print '--'
                 print cmd.helpdesc
 
+class ModCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'MOD',
+                "MOD/M N [text]     : modify task N.",
+                '',
+                ['M'])
+    def run(self, todo, line):
+        if todo.modifyTask(line, TodoItem.MODIFY):
+            todo.sortByPriority()
+            todo.save("")
+        else:
+            printCurrent = False
+
 class ListCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'LIST',
@@ -1440,12 +1453,6 @@ class TodoList:
                 elif line == "":
                     self.addTaskExternal()
                 elif self.modifyTask(line, TodoItem.MODIFY, externalEditor = True):
-                    self.sortByPriority()
-                    self.save("")
-                else:
-                    printCurrent = False
-            elif command == "MOD" or command == "M":
-                if self.modifyTask(line, TodoItem.MODIFY):
                     self.sortByPriority()
                     self.save("")
                 else:
