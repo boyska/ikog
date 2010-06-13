@@ -19,7 +19,7 @@ cfgPAbbreviations = {}
 import sys
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 from datetime import timedelta
 import platform
 import urllib
@@ -2486,15 +2486,29 @@ class  TodoItem:
                         year = now.year
                         month = int(entry[0], 10)
                         day = int(entry[1], 10)
-                    else:
-                        year = now.year
-                        month = now.month
-                        day = int(entry[0], 10)
-                        if day < now.day:
-                            month = month + 1
-                        if month > 12:
-                            month = 1
-                            year = year + 1
+                    else: # n == 1
+                        if entry[0].isalpha():
+                            week_days = ('monday', 'tuesday', 'wednesday', 'thursday',
+                                    'friday', 'saturday', 'sunday')
+                            possible = [d for d in week_days
+                                    if d.startswith(dateStr.lower())]
+                            if len(possible) == 1: #no ambiguity
+                                now = datetime.now()
+                                days_delta = week_days.index(possible[0]) - now.weekday()
+                                delta = timedelta(days=days_delta%7 or 7)
+                                dest = now+delta
+                                year = dest.year
+                                month = dest.month
+                                day = dest.day
+                        else:
+                            year = now.year
+                            month = now.month
+                            day = int(entry[0], 10)
+                            if day < now.day:
+                                month = month + 1
+                            if month > 12:
+                                month = 1
+                                year = year + 1
                     if year < 1000:
                         year = year + 2000
                     when = self.makeSafeDate(year, month, day)
