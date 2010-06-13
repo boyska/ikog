@@ -535,37 +535,37 @@ class BaseCommand(object):
         self.shortdesc = shortdesc
         self.helpdesc = helpdesc
         self.aliases = aliases
-    def run(self, test, line):
+    def run(self, todo, line):
         '''This MUST be overridden'''
         raise NotImplementedError
 
 class TopCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'TOP', 'Go to top', '', ['T'])
-    def run(self, test, line):
-        test.currentTask = 0
+    def run(self, todo, line):
+        todo.currentTask = 0
         if line != "":
-            test.setFilterArray(True, "")
-            test.showLocalFilter()
-            test.printShortList(line)
+            todo.setFilterArray(True, "")
+            todo.showLocalFilter()
+            todo.printShortList(line)
             truncateTask = True
 
 class GoCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'GO', 'GO N\tDisplay task N', '', ['G'])
-    def run(self, test, line):
-        test.moveTo(line)
+    def run(self, todo, line):
+        todo.moveTo(line)
 
 class PabCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'PAB',
                 'PAB :px :pfull\tProject abbreviation. :px expands to :pfull',
                 '')
-    def run(self, test, line):
+    def run(self, todo, line):
         if line.strip() == "?":
-            test.showPAbbreviations()
-        elif test.setPAbbreviation(line):
-            test.save("")
+            todo.showPAbbreviations()
+        elif todo.setPAbbreviation(line):
+            todo.save("")
 
 class ListFileCommand(BaseCommand):
     def __init__(self):
@@ -576,7 +576,7 @@ class ListFileCommand(BaseCommand):
                 'LISTARGS is any output you can give to LIST:'
                 'see "HELP LIST" for more details\n',
                 ['LF'])
-    def run(self, test, line):
+    def run(self, todo, line):
         splitted_line = [word for word in line.split(' ', 1) if word]
         if not splitted_line:
             output_file = 'output'
@@ -590,10 +590,10 @@ class ListFileCommand(BaseCommand):
         old_out = sys.stdout
         print ruler
         sys.stdout = open(output_file, 'w')
-        test.setFilterArray(True, list_args)
-        #test.showLocalFilter()
-        test.printList(False, "", "")
-        test.clearFilterArray(True)
+        todo.setFilterArray(True, list_args)
+        #todo.showLocalFilter()
+        todo.printList(False, "", "")
+        todo.clearFilterArray(True)
         truncateTask = True
         sys.stdout = old_out
         print "Output sent to %s" % output_file
@@ -602,31 +602,49 @@ class ListFileCommand(BaseCommand):
 class HelpCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'HELP',
-                "HELP [command]\tShow help. If command is given, show help for that"
+                "HELP [command]\tShow help. If command is given, show help for that",
                 '', ['H'])
-    def run(self, test, line):
+    def run(self, todo, line):
         if not line.strip():
-            test.printHelp(test.help)
+            todo.printHelp(todo.help)
             return
-        if len(line.strip().split()) > 1 or line.strip() not in test.commands:
+        if len(line.strip().split()) > 1 or line.strip() not in todo.commands:
             print "Can't understand. You should give a command name, or nothing to receive a complete help"
         else:
-            cmd = test.commands[line.strip()]
+            cmd = todo.commands[line.strip()]
             print cmd.shortdesc
             if cmd.helpdesc:
                 print '--'
                 print cmd.helpdesc
+
+class ListCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'LIST',
+                "LIST [filter]\tlist tasks",
+                "Filter = context, project, priority, date\n"
+                   ": or word. Contexts begin with @ and projects with :p\n"
+                   ": Dates begin with :d, anything else is a search word.\n"
+                   ": Precede term with - to exclude e.g.  -@Computer\n",
+                ['L'])
+    def run(self, todo, line):
+        print ruler
+        todo.setFilterArray(True, line)
+        todo.showLocalFilter()
+        todo.printList(False, "", "")
+        todo.clearFilterArray(True)
+        print ruler
+        truncateTask = True
 
 class AbCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'ABBREV',
                 "ABBREV/AB @x @full\tCreate new abbreviation. @x expands to @full",
                 '', ['AB'])
-    def run(self, test, line):
+    def run(self, todo, line):
         if line.strip() == "?":
-            test.showAbbreviations()
-        elif test.setAbbreviation(line):
-            test.save("")
+            todo.showAbbreviations()
+        elif todo.setAbbreviation(line):
+            todo.save("")
 ### The main todo list
 class TodoList:
     quickCard = ["Quick reference card:",
@@ -1451,14 +1469,6 @@ class TodoList:
                 if self.moveTask(line, self.MOVE_UP):
                     self.sortByPriority()
                     self.save("")
-            elif command == "LIST" or command == "L":
-                print ruler
-                self.setFilterArray(True, line)
-                self.showLocalFilter()
-                self.printList(False, "", "")
-                self.clearFilterArray(True)
-                print ruler
-                truncateTask = True
             elif command == "LIST>" or command == "L>":
                 self.startHtml("")
                 self.setFilterArray(True, line)
