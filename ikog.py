@@ -649,6 +649,22 @@ class ListCommand(BaseCommand):
         print ruler
         truncateTask = True
 
+class EdCommand(BaseCommand):
+    def __init__(self):
+        BaseCommand.__init__(self, 'EDIT',
+                "EDIT/ED [N]\tCreate task, or edit task N, using external editor.",
+                '', ['ED'])
+    def run(self, todo, line):
+        if not todo.sysCalls:
+            todo.showError("External editing needs to use system calls.  Use SYS ON to enable them.")
+        elif line == "":
+            todo.addTaskExternal()
+        elif todo.modifyTask(line, TodoItem.MODIFY, externalEditor = True):
+            todo.sortByPriority()
+            todo.save("")
+        else:
+            printCurrent = False
+
 class AbCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self, 'ABBREV',
@@ -1449,16 +1465,6 @@ class TodoList:
                 if self.substituteText(line):
                     self.sortByPriority()
                     self.save("")
-            elif command == "EDIT" or command == "ED":
-                if not self.sysCalls:
-                    self.showError("External editing needs to use system calls.  Use SYS ON to enable them.")
-                elif line == "":
-                    self.addTaskExternal()
-                elif self.modifyTask(line, TodoItem.MODIFY, externalEditor = True):
-                    self.sortByPriority()
-                    self.save("")
-                else:
-                    printCurrent = False
             elif command == "EXTEND" or command == "E":
                 if self.modifyTask(line, TodoItem.APPEND):
                     self.sortByPriority()
